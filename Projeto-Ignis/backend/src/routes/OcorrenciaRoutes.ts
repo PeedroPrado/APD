@@ -13,4 +13,11 @@ router.get("/foco_calor", OcorrenciaController.Filtrar_foco_calor);
 // 🔥 Rota para área queimada com filtros opcionais
 router.get("/area_queimada", OcorrenciaController.Filtrar_area_queimada);
 
+// 📊 Rotas de gráficos separadas das rotas do mapa
+router.get("/grafico/foco_calor", OcorrenciaController.Grafico_foco_calor);
+
+router.get("/grafico/area_queimada", OcorrenciaController.Grafico_area_queimada);
+
+router.get("/grafico/risco", OcorrenciaController.Grafico_risco_fogo);
+
 export default router;

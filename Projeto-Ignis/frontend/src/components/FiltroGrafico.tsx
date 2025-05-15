@@ -1,93 +1,111 @@
+// FiltroGrafico.tsx seguro com navegação de rota ao aplicar
 import React, { useState } from 'react';
 import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
 
 interface FiltroGraficoProps {
   onFiltrar: (filtros: {
-    tipo: string;
-    agrupamento: 'estado' | 'bioma';
+    tipo: 'foco_calor' | 'area_queimada' | 'risco';
+    estado: string;
+    bioma: string;
     inicio: string;
     fim: string;
   }) => void;
 }
 
 const FiltroGrafico: React.FC<FiltroGraficoProps> = ({ onFiltrar }) => {
-  const [index1, setIndex1] = useState(0);
-  const [index2, setIndex2] = useState(0);
+  const navigate = useNavigate();
+  const [tipo, setTipo] = useState<'foco_calor' | 'area_queimada' | 'risco'>('foco_calor');
+  const [estado, setEstado] = useState('');
+  const [bioma, setBioma] = useState('');
   const [inicio, setInicio] = useState('');
   const [fim, setFim] = useState('');
 
-  const estados1 = ['foco_calor', 'area_queimada', 'risco'];
-  const estados2 = ['estado', 'bioma'];
-  const cores1 = ['#FF5722', '#795548', '#FF9800'];
-  const cores2 = ['#1976D2', '#388E3C'];
-
   const aplicarFiltro = () => {
-    onFiltrar({
-      tipo: estados1[index1],
-      agrupamento: estados2[index2] as 'estado' | 'bioma',
-      inicio,
-      fim,
-    });
+    onFiltrar({ tipo, estado, bioma, inicio, fim });
+    const rota = tipo === 'foco_calor' ? '/foco_calor' : tipo === 'area_queimada' ? '/area_queimada' : '/risco';
+    navigate(rota);
+  };
+
+  const limparFiltro = () => {
+    setTipo('foco_calor');
+    setEstado('');
+    setBioma('');
+    setInicio('');
+    setFim('');
+    onFiltrar({ tipo: 'foco_calor', estado: '', bioma: '', inicio: '', fim: '' });
+    navigate('/foco_calor');
   };
 
   return (
     <FiltroContainer>
       <Filtros>
-        <ToggleLabels1>
-          <span>Focos</span>
-          <span>Área de Queimadas</span>
-          <span>Riscos de Fogo</span>
-        </ToggleLabels1>
+        <label>Tipo de dado</label>
+        <Select value={tipo} onChange={(e) => setTipo(e.target.value as 'foco_calor' | 'area_queimada' | 'risco')}>
+          <option value="foco_calor">Foco de Calor</option>
+          <option value="area_queimada">Área Queimada</option>
+          <option value="risco">Risco de Fogo</option>
+        </Select>
 
-        <SliderContainer onClick={() => setIndex1((index1 + 1) % estados1.length)}>
-          <Slider1 style={{ backgroundColor: cores1[index1] }}>
-            <SliderThumb1 style={{ transform: `translateX(${index1 * 122}px)` }} />
-          </Slider1>
-        </SliderContainer>
+        <label>Estados</label>
+        <Select value={estado} onChange={(e) => setEstado(e.target.value)}>
+          <option value="">Selecione um estado</option>
+          <option value="12">Acre</option>
+          <option value="27">Alagoas</option>
+          <option value="16">Amapá</option>
+          <option value="13">Amazonas</option>
+          <option value="29">Bahia</option>
+          <option value="23">Ceará</option>
+          <option value="32">Espírito Santo</option>
+          <option value="52">Goiás</option>
+          <option value="21">Maranhão</option>
+          <option value="51">Mato Grosso</option>
+          <option value="50">Mato Grosso do Sul</option>
+          <option value="31">Minas Gerais</option>
+          <option value="15">Pará</option>
+          <option value="25">Paraíba</option>
+          <option value="41">Paraná</option>
+          <option value="26">Pernambuco</option>
+          <option value="22">Piauí</option>
+          <option value="33">Rio de Janeiro</option>
+          <option value="24">Rio Grande do Norte</option>
+          <option value="43">Rio Grande do Sul</option>
+          <option value="11">Rondônia</option>
+          <option value="14">Roraima</option>
+          <option value="42">Santa Catarina</option>
+          <option value="35">São Paulo</option>
+          <option value="28">Sergipe</option>
+          <option value="17">Tocantins</option>
+          <option value="53">Distrito Federal</option>
+        </Select>
 
-        <ToggleLabels2>
-          <span>Estados</span>
-          <span>Biomas</span>
-        </ToggleLabels2>
+         <label>Biomas</label>
+        <Select value={bioma} onChange={(e) => setBioma(e.target.value)}>
+          <option value="">Selecione um bioma</option>
+          <option value="3">Cerrado</option>
+          <option value="2">Caatinga</option>
+          <option value="6">Pantanal</option>
+          <option value="4">Mata Atlântica</option>
+          <option value="5">Pampa</option>
+          <option value="1">Amazônia</option>
+        </Select>
 
-        <SliderContainer onClick={() => setIndex2((index2 + 1) % estados2.length)}>
-          <Slider2 style={{ backgroundColor: cores2[index2] }}>
-            <SliderThumb2 style={{ transform: `translateX(${index2 * 75}px)` }} />
-          </Slider2>
-        </SliderContainer>
-
-        <Datas>
+         <Datas>
           <Label>Datas:</Label>
           <InputGroup>
             <InputContainer>
-              <Label htmlFor="inicio">Início</Label>
-              <Input
-                type="date"
-                id="inicio"
-                name="inicio"
-                min="2025-03-20"
-                max=""
-                value={inicio}
-                onChange={(e) => setInicio(e.target.value)}
-              />
+              <Label>Início</Label>
+              <Input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} />
             </InputContainer>
             <InputContainer>
-              <Label htmlFor="fim">Fim</Label>
-              <Input
-                type="date"
-                id="fim"
-                name="fim"
-                min="2025-03-20"
-                max=""
-                value={fim}
-                onChange={(e) => setFim(e.target.value)}
-              />
+              <Label>Fim</Label>
+              <Input type="date" value={fim} onChange={(e) => setFim(e.target.value)} />
             </InputContainer>
           </InputGroup>
         </Datas>
 
         <AplicarButton onClick={aplicarFiltro}>Aplicar</AplicarButton>
-        <LimparButton onClick={() => window.location.reload()}>Limpar</LimparButton>
+        <LimparButton onClick={limparFiltro}>Limpar</LimparButton>
       </Filtros>
     </FiltroContainer>
   );
@@ -95,175 +113,90 @@ const FiltroGrafico: React.FC<FiltroGraficoProps> = ({ onFiltrar }) => {
 
 export default FiltroGrafico;
 
-// Estilizações dos componentes com styled-components
-
-// Container principal do filtro
 const FiltroContainer = styled.div`
-  font-weight: bold; // Estilo do texto dentro do filtro
-  padding: 20px; // Espaçamento interno
-  background-color: #d32f2f; // Cor de fundo
-  height: 83vh; // Altura do container
-  width: 350px; // Largura do container
-  border-radius: 0px 8px 8px 8px; // Borda arredondada no canto superior direito e inferior
-  z-index: 1; // Prioridade de sobreposição
-  margin-top: 2%; // Margem superior
-  position: fixed; // Fixa o filtro na tela
+  font-weight: bold;
+  padding: 20px;
+  background-color: #d32f2f;
+  height: 83vh;
+  width: 350px;
+  border-radius: 0px 8px 8px 8px;
+  z-index: 1;
+  margin-top: 2%;
+  position: fixed;
 `;
 
-// Contêiner interno para os filtros
 const Filtros = styled.div`
-  padding: 10px 0; // Espaçamento interno
+  padding: 10px 0;
 `;
 
-// Estilos para os rótulos do primeiro slider
-const ToggleLabels1 = styled.div`
-  display: flex; // Exibe os rótulos em linha
-  justify-content: space-between; // Espaça os itens uniformemente
-  margin-bottom: 10px; // Espaçamento inferior
-
-  span {
-    font-size: 16px; // Tamanho da fonte
-    color: #000; // Cor do texto
-    font-weight: bold; // Negrito
-  }
+const Select = styled.select`
+  width: 100%;
+  padding: 5px;
+  margin-bottom: 10px;
+  border-radius: 4px;
 `;
 
-// Estilos para os rótulos do segundo slider
-const ToggleLabels2 = styled.div`
-  display: flex; // Exibe os rótulos em linha
-  justify-content: center;  /* Alinha os itens ao centro */
-  gap: 60px; // Espaçamento entre os rótulos
-
-  span {
-    font-size: 16px; // Tamanho da fonte
-    color: #000; // Cor do texto
-    font-weight: bold; // Negrito
-  }
-`;
-
-// Estilos para o container de sliders
-const SliderContainer = styled.div`
-  margin: 10px 0; // Espaçamento vertical entre os sliders
-`;
-
-// Estilos para o primeiro slider
-const Slider1 = styled.div`
-  position: relative; // Define a posição relativa para o thumb
-  width: 345px; // Largura do slider
-  height: 24px; // Altura do slider
-  background-color: #ddd; // Cor de fundo
-  border-radius: 12px; // Bordas arredondadas
-  border: 1px solid white; // Borda branca
-  display: flex; // Utiliza flexbox
-  align-items: center; // Alinha os itens no centro
-  padding: 2px; // Espaçamento interno
-  cursor: pointer; // Cursor de ponteiro para indicar interatividade
-`;
-
-// Estilos para o segundo slider
-const Slider2 = styled.div`
-  position: relative; // Define a posição relativa para o thumb
-  width: 150px; // Largura do slider
-  height: 24px; // Altura do slider
-  background-color: #ddd; // Cor de fundo
-  border-radius: 12px; // Bordas arredondadas
-  border: 1px solid white; // Borda branca
-  display: flex; // Utiliza flexbox
-  align-items: center; // Alinha os itens no centro
-  padding: 2px; // Espaçamento interno
-  cursor: pointer; // Cursor de ponteiro
-  left: 50%; // Centraliza o slider horizontalmente
-  transform: translateX(-50%); // Ajusta o deslocamento para garantir o alinhamento correto
-`;
-
-// Estilos para o "thumb" do primeiro slider
-const SliderThumb1 = styled.div`
-  position: absolute; // Posição absoluta dentro do slider
-  width: 100px; // Largura do thumb
-  height: 20px; // Altura do thumb
-  background-color: #333; // Cor do thumb
-  border-radius: 10px; // Bordas arredondadas
-  transition: transform 0.3s ease-in-out; // Transição suave ao mover o thumb
-`;
-
-// Estilos para o "thumb" do segundo slider
-const SliderThumb2 = styled.div`
-  position: absolute; // Posição absoluta dentro do slider
-  width: 75px; // Largura do thumb
-  height: 20px; // Altura do thumb
-  background-color: #333; // Cor do thumb
-  border-radius: 10px; // Bordas arredondadas
-  transition: transform 0.3s ease-in-out; // Transição suave ao mover o thumb
-  display: flex; // Utiliza flexbox para alinhamento
-  align-items: center; // Alinha os itens no centro
-`;
-
-// Estilos para a seção de datas
 const Datas = styled.div`
-  margin-top: 10px; // Espaçamento superior
+  margin-top: 20px;
 `;
 
-// Estilos para os rótulos de input
 const Label = styled.label`
-  font-weight: bold; // Negrito
-  font-size: 1rem; // Tamanho da fonte
-  display: block; // Exibe o rótulo como bloco
-  margin-bottom: 5px; // Espaçamento inferior
+  font-weight: bold;
+  font-size: 1rem;
+  display: block;
+  margin-bottom: 5px;
 `;
 
-// Estilos para o grupo de inputs
 const InputGroup = styled.div`
-  display: flex; // Exibe os inputs em linha
-  justify-content: space-between; // Espaça uniformemente os itens
-  gap: 15px; // Espaçamento entre os inputs
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
 `;
 
-// Estilos para o container de cada input
 const InputContainer = styled.div`
-  display: flex; // Exibe os itens em linha
-  flex-direction: column; // Organiza os itens na direção vertical
-  width: 48%; // Largura do container de input
+  display: flex;
+  flex-direction: column;
+  width: 48%;
 `;
 
-// Estilos para o input de data
 const Input = styled.input`
-  padding: 8px; // Espaçamento interno
-  width: 150px; // Largura do input
-  border-radius: 4px; // Bordas arredondadas
-  border: 1px solid #ccc; // Borda do input
-  margin-top: 5px; // Espaçamento superior
+  padding: 8px;
+  width: 150px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  margin-top: 5px;
 `;
 
-// Estilos para o botão de aplicar
 const AplicarButton = styled.button`
-  margin-top: 10px; // Espaçamento superior
-  margin-left: 250px; // Espaçamento à esquerda
-  width: 100px; // Largura do botão
-  padding: 8px; // Espaçamento interno
-  background-color: #616161; // Cor de fundo
-  color: white; // Cor do texto
-  border: none; // Remove a borda
-  border-radius: 4px; // Bordas arredondadas
-  cursor: pointer; // Cursor de ponteiro
-  font-weight: bold; // Negrito
+  margin-top: 10px;
+  margin-left: 250px;
+  width: 100px;
+  padding: 8px;
+  background-color: #616161;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+
   &:hover {
-    background-color: #388E3C; // Cor de fundo ao passar o mouse
+    background-color: #388E3C;
   }
 `;
 
-// Estilos para o botão de limpar
 const LimparButton = styled.button`
-  margin-top: 5px; // Espaçamento superior
-  margin-left: 10px; // Espaçamento à esquerda
-  width: 100px; // Largura do botão
-  padding: 8px; // Espaçamento interno
-  background-color: #616161; // Cor de fundo
-  color: white; // Cor do texto
-  border: none; // Remove a borda
-  border-radius: 4px; // Bordas arredondadas
-  cursor: pointer; // Cursor de ponteiro
-  font-weight: bold; // Negrito
+  margin-top: 5px;
+  margin-left: 10px;
+  width: 100px;
+  padding: 8px;
+  background-color: #616161;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+
   &:hover {
-    background-color: #388E3C; // Cor de fundo ao passar o mouse
+    background-color: #388E3C;
   }
 `;

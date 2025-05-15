@@ -1,4 +1,4 @@
-// Grafico.tsx
+// Grafico.tsx seguro
 import React, { useEffect, useState } from 'react';
 import { Chart } from 'react-google-charts';
 
@@ -8,11 +8,11 @@ interface Filtros {
   bioma: string;
   inicio: string;
   fim: string;
-  agrupamento: 'estado' | 'bioma';
 }
 
 interface Dado {
-  data: string;
+  data?: string;
+  estado: string;
   risco_fogo?: number;
   frp?: number;
   area_queimada?: number;
@@ -27,7 +27,11 @@ const Grafico: React.FC<Props> = ({ filtros }) => {
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
-    if (!filtros) return;
+    if (!filtros || !['risco', 'foco_calor', 'area_queimada'].includes(filtros.tipo)) {
+      console.warn('Tipo inválido ou filtros indefinidos.');
+      setCarregando(false);
+      return;
+    }
 
     const fetchDados = async () => {
       setCarregando(true);
@@ -43,23 +47,31 @@ const Grafico: React.FC<Props> = ({ filtros }) => {
         filtros.tipo === 'foco_calor' ? `/api/foco_calor` :
         filtros.tipo === 'area_queimada' ? `/api/area_queimada` : null;
 
-      if (!url) {
-        console.warn('Tipo inválido para gráfico.');
-        setCarregando(false);
-        return;
-      }
-
       try {
         const res = await fetch(`http://localhost:3000${url}?${query.toString()}`);
-        const contentType = res.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const json = await res.json();
-          if (Array.isArray(json)) setDados(json);
+
+        if (!res.ok) {
+          throw new Error(`Erro HTTP: ${res.status}`);
+        }
+
+        const text = await res.text();
+
+        if (!text.trim()) {
+          console.warn('Resposta vazia do backend');
+          setDados([]);
+          return;
+        }
+
+        const json = JSON.parse(text);
+        if (Array.isArray(json)) {
+          setDados(json);
         } else {
-          console.error('Resposta não é JSON válida');
+          console.warn('Resposta JSON inesperada:', json);
+          setDados([]);
         }
       } catch (error) {
         console.error('Erro ao buscar dados do gráfico:', error);
+        setDados([]);
       } finally {
         setCarregando(false);
       }
@@ -81,18 +93,17 @@ const Grafico: React.FC<Props> = ({ filtros }) => {
       : 'valor';
 
   const chartData = [
-    ['Data', tipo.toUpperCase()],
-    ...dados.map((d) => [
-      new Date(d.data).toLocaleDateString('pt-BR'),
-      Number(d[tipo as keyof Dado])
-    ])
-  ];
+  ['Estado', 'FRP'],
+  ...dados.map((d) => [d.estado, Number(d.frp)])
+];
+
+  const chartType = tipo === 'area_queimada' ? 'BarChart' : tipo === 'frp' ? 'ColumnChart' : 'LineChart';
 
   const options = {
     title: 'Dados filtrados',
     chartArea: { width: '80%' },
     hAxis: { title: 'Data' },
-    vAxis: { title: tipo.toUpperCase() },
+    vAxis: { title: tipo.toUpperCase(), minValue: 0 },
     legend: { position: 'none' },
   };
 
@@ -105,16 +116,23 @@ const Grafico: React.FC<Props> = ({ filtros }) => {
         padding: '2rem',
         width: '100%',
         height: '100%',
+        marginLeft: '350px'
       }}
     >
       <div style={{ width: '60%', minWidth: '500px' }}>
         <Chart
-          chartType="BarChart"
-          width="100%"
-          height="300px"
-          data={chartData}
-          options={options}
-        />
+  chartType="BarChart"
+  width="100%"
+  height="500px"
+  data={chartData}
+  options={{
+    title: 'FRP por Estado',
+    chartArea: { width: '70%' },
+    hAxis: { title: 'FRP', minValue: 0 },
+    vAxis: { title: 'Estado' },
+    legend: { position: 'none' },
+  }}
+/>
       </div>
     </div>
   );
