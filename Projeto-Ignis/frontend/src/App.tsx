@@ -27,11 +27,11 @@ const App: React.FC = () => {
   const location = useLocation();
 
   const [filtros, setFiltros] = useState<Filtros>({
-    tipo: 'foco_calor', // ou 'area_queimada' ou 'risco' dependendo da inicialização desejada
+    tipo: '', // ou 'area_queimada' ou 'risco' dependendo da inicialização desejada
     estado: '',
     bioma: '',
-    inicio: '2025-03-20',
-    fim: '2025-03-27'
+    inicio: '',
+    fim: ''
   });
 
   const handleClick = (tipo: string) => {

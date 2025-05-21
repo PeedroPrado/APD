@@ -188,6 +188,7 @@ JOIN Bioma b ON a.bioma_id = b.id
     }
   }
   
+   
   // 📊 NOVO MÉTODO PARA GRÁFICO DE ÁREA QUEIMADA
 public async GraficoAreaQueimada(req: Request, res: Response): Promise<void> {
   try {
@@ -326,5 +327,4 @@ public async GraficoFocoCalor(req: Request, res: Response): Promise<void> {
 
 
 }
-
 export default new OcorrenciaController();

@@ -66,7 +66,7 @@ const FiltroMapa: React.FC<FiltroMapaProps> = ({ onFiltrar }) => {
           <option value="">Selecione um estado</option>
           <option value="12">Acre</option>
           <option value="27">Alagoas</option>
-          <option value="16">Amapá</option>
+          <option value="">Amapá</option>
           <option value="13">Amazonas</option>
           <option value="29">Bahia</option>
           <option value="23">Ceará</option>

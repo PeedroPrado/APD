@@ -6,8 +6,10 @@ interface DadoGrafico {
   total: number;
 }
 
+
 interface Filtros {
   tipo: string;
+  local: string;
   estado: string;
   bioma: string;
   inicio: string;
@@ -21,12 +23,14 @@ interface Props {
 const Grafico: React.FC<Props> = ({ filtros }) => {
   const [dados, setDados] = useState<DadoGrafico[]>([]);
 
+
   const montarQueryParams = () => {
     const params = new URLSearchParams();
     if (filtros.estado) params.append('estado', filtros.estado);
     if (filtros.bioma) params.append('bioma', filtros.bioma);
     if (filtros.inicio) params.append('inicio', filtros.inicio);
     if (filtros.fim) params.append('fim', filtros.fim);
+    params.append('local', filtros.local); // ← importante!
     return params.toString();
   };
 
@@ -37,7 +41,7 @@ const Grafico: React.FC<Props> = ({ filtros }) => {
       try {
         const res = await fetch(url);
         const rawData = await res.json();
-        console.log("Dados do gráfico:", rawData);
+        console.log("Dados do gráfico:", rawData); // debug
         if (Array.isArray(rawData)) {
           setDados(rawData);
         } else {
@@ -88,7 +92,7 @@ const Grafico: React.FC<Props> = ({ filtros }) => {
           chartType="BarChart"
           data={chartData}
           options={{
-            title: 'Área Queimada por Bioma',
+            title: `Área Queimada por ${filtros.local === 'Biomas' ? 'Bioma' : 'Estado'}`,
             legend: { position: 'none' },
             bars: 'horizontal',
             height: 400,
