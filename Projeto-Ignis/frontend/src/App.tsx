@@ -7,78 +7,65 @@ import Abas from './components/Abas';
 import FiltroMapa from './components/FiltroMapa';
 import FiltroGrafico from './components/FiltroGrafico';
 import MapaVazio from './components/MapaVazio';
-import Grafico from './components/Grafico';
+import MeusGraficos from './components/Grafico';
 import styled from 'styled-components';
 
 // Lazy loading do Mapa
 const Mapa = React.lazy(() => import('./components/Mapa'));
 
+// Interface para tipagem dos filtros
 interface Filtros {
   tipo: string;
   estado: string;
   bioma: string;
   inicio: string;
   fim: string;
-  agrupamento: 'estado' | 'bioma';
 }
 
 const App: React.FC = () => {
   const [ativo, setAtivo] = useState('mapa');
   const location = useLocation();
 
+  const [filtros, setFiltros] = useState<Filtros>({
+    tipo: 'foco_calor', // ou 'area_queimada' ou 'risco' dependendo da inicialização desejada
+    estado: '',
+    bioma: '',
+    inicio: '2025-03-20',
+    fim: '2025-03-27'
+  });
+
   const handleClick = (tipo: string) => {
     setAtivo(tipo);
   };
-
-  const [filtros, setFiltros] = useState<Filtros>({
-    tipo: 'Focos',
-    estado: '',
-    bioma: '',
-    inicio: '',
-    fim: '',
-    agrupamento: 'estado',
-  });
 
   return (
     <AppContainer>
       <Header />
       <MainContent>
-        <Sidebar>
+        <ContentContainer>
           <Abas onClick={handleClick} ativo={ativo} />
           {ativo === 'mapa' ? (
             <FiltroMapa onFiltrar={setFiltros} />
           ) : (
-            <FiltroGrafico
-              onFiltrar={(f) =>
-                setFiltros((prev) => ({
-                  ...prev,
-                  tipo: f.tipo,
-                  agrupamento: f.agrupamento,
-                  inicio: f.inicio,
-                  fim: f.fim,
-                }))
-              }
-            />
+            <FiltroGrafico onAplicar={setFiltros} />
           )}
-        </Sidebar>
+        </ContentContainer>
 
-        <MapArea>
-          <Suspense fallback={<div style={{ padding: '2rem' }}>Carregando o mapa...</div>}>
-            {ativo === 'mapa' ? (
-              location.pathname === '/risco' ? (
-                <Mapa tipo="risco" filtros={filtros} />
-              ) : location.pathname === '/foco_calor' ? (
-                <Mapa tipo="foco_calor" filtros={filtros} />
-              ) : location.pathname === '/area_queimada' ? (
-                <Mapa tipo="area_queimada" filtros={filtros} />
-              ) : (
-                <MapaVazio />
-              )
+        <Suspense fallback={<div style={{ padding: '2rem' }}>Carregando...</div>}>
+          {ativo === 'mapa' ? (
+            location.pathname === '/risco' ? (
+              <Mapa tipo="risco" />
+            ) : location.pathname === '/foco_calor' ? (
+              <Mapa tipo="foco_calor" />
+            ) : location.pathname === '/area_queimada' ? (
+              <Mapa tipo="area_queimada" />
             ) : (
-              <Grafico filtros={filtros} />
-            )}
-          </Suspense>
-        </MapArea>
+              <MapaVazio />
+            )
+          ) : (
+            <MeusGraficos filtros={filtros} />
+          )}
+        </Suspense>
       </MainContent>
     </AppContainer>
   );
@@ -86,7 +73,7 @@ const App: React.FC = () => {
 
 export default App;
 
-// Estilos
+// 🔥 Estilos
 const AppContainer = styled.div`
   height: 100vh;
   width: 100vw;
@@ -103,19 +90,9 @@ const MainContent = styled.div`
   overflow: hidden;
 `;
 
-const Sidebar = styled.div`
+const ContentContainer = styled.div`
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
-  width: 350px;
   overflow: auto;
-  background-color: #f5f5f5;
-`;
-
-const MapArea = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 0;
 `;

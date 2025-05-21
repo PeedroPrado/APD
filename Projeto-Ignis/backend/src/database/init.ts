@@ -1,9 +1,131 @@
 import { query } from "./db";
-
 async function init() {
     return await query(`
         START TRANSACTION;
         CREATE EXTENSION IF NOT EXISTS postgis;
+
+        
+
+CREATE TABLE mes_fogo (
+    escopo TEXT,
+    tipo TEXT,
+    mes TEXT,
+    valor NUMERIC
+);
+
+INSERT INTO mes_fogo (escopo, tipo, mes, valor) VALUES
+-- MAX
+('nacional', 'max', 'janeiro', 4657),
+('nacional', 'max', 'fevereiro', 3157),
+('nacional', 'max', 'março', 3383),
+('nacional', 'max', 'abril', 1702),
+('nacional', 'max', 'maio', 3578),
+('nacional', 'max', 'junho', 9179),
+('nacional', 'max', 'julho', 19364),
+('nacional', 'max', 'agosto', 63764),
+('nacional', 'max', 'setembro', 73141),
+('nacional', 'max', 'outubro', 28731),
+('nacional', 'max', 'novembro', 26424),
+('nacional', 'max', 'dezembro', 16924),
+
+-- MÉDIA
+('nacional', 'media', 'janeiro', 546.5),
+('nacional', 'media', 'fevereiro', 344.5),
+('nacional', 'media', 'março', 417),
+('nacional', 'media', 'abril', 371.7),
+('nacional', 'media', 'maio', 653.8),
+('nacional', 'media', 'junho', 1302.8),
+('nacional', 'media', 'julho', 2565.7),
+('nacional', 'media', 'agosto', 7891.3),
+('nacional', 'media', 'setembro', 10793.8),
+('nacional', 'media', 'outubro', 6292),
+('nacional', 'media', 'novembro', 3661.8),
+('nacional', 'media', 'dezembro', 1879),
+
+-- MÍNIMO
+('nacional', 'min', 'janeiro', 6),
+('nacional', 'min', 'fevereiro', 8),
+('nacional', 'min', 'março', 2),
+('nacional', 'min', 'abril', 1),
+('nacional', 'min', 'maio', 3),
+('nacional', 'min', 'junho', 1),
+('nacional', 'min', 'julho', 4),
+('nacional', 'min', 'agosto', 7),
+('nacional', 'min', 'setembro', 7),
+('nacional', 'min', 'outubro', 5),
+('nacional', 'min', 'novembro', 2),
+('nacional', 'min', 'dezembro', 6);
+--Qual mês tem maior risco de fogo médio:
+
+
+SELECT 
+  mes, 
+  ROUND(AVG(valor), 1) AS media_geral
+FROM mes_fogo
+WHERE tipo = 'media'
+GROUP BY mes
+ORDER BY media_geral DESC
+LIMIT 1;
+
+
+--Maior e menor média mensal
+
+-- Seleciona os 5 meses com maior média de risco de fogo (valores do tipo 'media')
+SELECT 
+  mes, 
+  ROUND(AVG(valor), 1) AS media_geral  -- Calcula a média e arredonda para 1 casa decimal
+FROM mes_fogo
+WHERE tipo = 'media'                   -- Filtra apenas os valores do tipo 'media'
+GROUP BY mes                           -- Agrupa por mês
+ORDER BY media_geral DESC              -- Ordena da maior média para a menor
+LIMIT 5;                               -- Mostra só os 5 primeiros resultados
+
+
+-- Consulta que retorna o mês com o maior valor máximo de risco de fogo
+SELECT 
+  mes, 
+  valor AS valor_maximo
+FROM mes_fogo
+WHERE tipo = 'max'         -- Considera apenas os valores máximos
+ORDER BY valor DESC        -- Ordena do maior para o menor
+LIMIT 1;                   -- Retorna só o maior valor (primeiro da lista)
+
+-- Consulta que retorna o mês com o menor valor mínimo de risco de fogo
+SELECT 
+  mes, 
+  valor AS valor_minimo
+FROM mes_fogo
+WHERE tipo = 'min'         -- Considera apenas os valores mínimos
+ORDER BY valor ASC         -- Ordena do menor para o maior
+LIMIT 10;                   -- Retorna só o menor valor (primeiro da lista)
+
+
+-- Consulta que retorna a média de risco de fogo por mês, arredondada para 1 casa decimal
+--Se quiser a mesma consulta para os tipos 'max' ou 'min', é só trocar essa linha: WHERE tipo = 'media'
+
+SELECT 
+  mes, 
+  ROUND(AVG(valor), 1) AS media_geral         -- Calcula a média de risco por mês e arredonda
+FROM mes_fogo
+WHERE tipo = 'media'                           -- Considera apenas os registros do tipo 'media'
+GROUP BY mes                                   -- Agrupa os dados por mês
+ORDER BY 
+  CASE                                         -- Ordena os meses na sequência correta do ano
+    WHEN mes = 'janeiro' THEN 1
+    WHEN mes = 'fevereiro' THEN 2
+    WHEN mes = 'março' THEN 3
+    WHEN mes = 'abril' THEN 4
+    WHEN mes = 'maio' THEN 5
+    WHEN mes = 'junho' THEN 6
+    WHEN mes = 'julho' THEN 7
+    WHEN mes = 'agosto' THEN 8
+    WHEN mes = 'setembro' THEN 9
+    WHEN mes = 'outubro' THEN 10
+    WHEN mes = 'novembro' THEN 11
+    WHEN mes = 'dezembro' THEN 12
+  END;
+
+--------------------------------------------------------------------------------
 
         CREATE TABLE IF NOT EXISTS Estados (
             id_estado INT PRIMARY KEY, 
@@ -31,15 +153,15 @@ async function init() {
 
         CREATE SEQUENCE IF NOT EXISTS risco_id_seq;
 
-        CREATE TABLE IF NOT EXISTS Risco (
-            id INTEGER PRIMARY KEY DEFAULT nextval('risco_id_seq'), 
-            data DATE, 
-            geometria GEOMETRY(POINT, 4326),
-            estado_id INTEGER, 
-            bioma_id INTEGER, 
-            risco_fogo NUMERIC(15,2), 
-            FOREIGN KEY (estado_id) REFERENCES Estados(id_estado),
-            FOREIGN KEY (bioma_id) REFERENCES Bioma(id)
+            CREATE TABLE IF NOT EXISTS Risco (
+                id INTEGER PRIMARY KEY DEFAULT nextval('risco_id_seq'), 
+                data DATE, 
+                geometria GEOMETRY(POINT, 4326),
+                estado_id INTEGER, 
+                bioma_id INTEGER, 
+                risco_fogo NUMERIC(15,2), 
+                FOREIGN KEY (estado_id) REFERENCES Estados(id_estado),
+                FOREIGN KEY (bioma_id) REFERENCES Bioma(id)
     );
 
             INSERT INTO Risco ( data, geometria, estado_id, bioma_id, risco_fogo) VALUES
@@ -51,7 +173,6 @@ async function init() {
     ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-38.60224, -11.07725), 4326), 29, 2, 1.0),
     ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-40.1136, -19.19049), 4326), 32, 4, 1.0),
     ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-38.50486, -11.58972), 4326), 29, 2, 1.0),
-    ('2025-03-31  ', ST_SetSRID(ST_MakePoint(-52.52063, -0.83872), 4326), 16, 1, -999.0),
     ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-41.14675, -13.84279), 4326), 29, 2, 1.0),
     ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-39.29832, -13.44713), 4326), 29, 4, 0.68),
     ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-40.91551, -9.17826), 4326), 29, 2, 1.0),
@@ -83,7 +204,6 @@ async function init() {
     ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-39.30748, -13.44845), 4326), 29, 4, 0.68),
     ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-45.52387, -14.53663), 4326), 29, 3, 1.0),
     ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-38.84074, -12.42241), 4326), 29, 4, 1.0),
-    ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-38.41619, -12.83139), 4326), 29, 4, -999.0),
     ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-39.29897, -17.21748), 4326), 29, 4, 0.78),
     ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-38.13322, -12.21778), 4326), 29, 4, 0.79),
     ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-37.02092, -9.79504), 4326), 27, 2, 1.0),
@@ -116,9 +236,7 @@ async function init() {
     ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-54.18819, -30.7372), 4326), 43, 5, 1.0),
     ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-55.49454, -28.19617), 4326), 43, 5, 0.76),
     ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-54.19075, -30.72665), 4326), 43, 5, 1.0),
-    ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-67.08612, -0.12206), 4326), 13, 1, -999.0),
     ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-56.70916, -22.13283), 4326), 50, 3, 0.26),
-    ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-64.71756, -3.35854), 4326), 13, 1, -999.0),
     ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-56.09542, -29.62114), 4326), 43, 5, 1.0),
     ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-56.6952, -22.13037), 4326), 50, 3, 0.26),
     ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-55.50827, -28.19858), 4326), 43, 5, 0.76),
@@ -483,7 +601,6 @@ async function init() {
     ('2025-03-24  ', ST_SetSRID(ST_MakePoint(-50.42047, -27.62779), 4326), 42, 4, 0.01),
     ('2025-03-24  ', ST_SetSRID(ST_MakePoint(-60.31613, 0.68319), 4326), 14, 1, 0.25),
     ('2025-03-24  ', ST_SetSRID(ST_MakePoint(-59.46302, 1.04536), 4326), 14, 1, 0.04),
-    ('2025-03-30  ', ST_SetSRID(ST_MakePoint(-45.38713, -3.65865), 4326), 21, 1, -999.0),
     ('2025-03-24  ', ST_SetSRID(ST_MakePoint(-50.04411, -27.69329), 4326), 42, 4, 0.23),
     ('2025-03-24  ', ST_SetSRID(ST_MakePoint(-59.48038, 1.12432), 4326), 14, 1, 0.05),
     ('2025-03-24  ', ST_SetSRID(ST_MakePoint(-60.32944, 0.68121), 4326), 14, 1, 0.05),
@@ -507,7 +624,6 @@ async function init() {
     ('2025-03-24  ', ST_SetSRID(ST_MakePoint(-51.92847, -11.6458), 4326), 51, 1, 0.02),
     ('2025-03-24  ', ST_SetSRID(ST_MakePoint(-61.55997, 4.09011), 4326), 14, 1, 0.07),
     ('2025-03-24  ', ST_SetSRID(ST_MakePoint(-60.37025, 0.92932), 4326), 14, 1, 0.05),
-    ('2025-04-02  ', ST_SetSRID(ST_MakePoint(-46.85657, -4.48091), 4326), 21, 1, -999.0),
     ('2025-03-24  ', ST_SetSRID(ST_MakePoint(-60.25007, 1.12104), 4326), 14, 1, 0.31),
     ('2025-03-25  ', ST_SetSRID(ST_MakePoint(-37.79337, -12.17546), 4326), 29, 4, 0.72),
     ('2025-03-25  ', ST_SetSRID(ST_MakePoint(-39.50198, -16.89167), 4326), 29, 4, 0.93),
@@ -704,7 +820,6 @@ async function init() {
     ('2025-03-27  ', ST_SetSRID(ST_MakePoint(-60.60622, 0.75518), 4326), 14, 1, 0.59),
     ('2025-03-27  ', ST_SetSRID(ST_MakePoint(-60.27719, 0.53461), 4326), 14, 1, 0.04),
     ('2025-03-27  ', ST_SetSRID(ST_MakePoint(-61.81194, 2.18747), 4326), 14, 1, 0.06),
-    ('2025-03-27  ', ST_SetSRID(ST_MakePoint(-61.29416, -5.81365), 4326), 13, 1, -999.0),
     ('2025-03-27  ', ST_SetSRID(ST_MakePoint(-61.5493, 4.07308), 4326), 14, 1, 0.13),
     ('2025-03-27  ', ST_SetSRID(ST_MakePoint(-60.72016, 2.5315), 4326), 14, 1, 0.2),
     ('2025-03-27  ', ST_SetSRID(ST_MakePoint(-60.71887, 2.52268), 4326), 14, 1, 0.19),
@@ -991,7 +1106,6 @@ async function init() {
     ('2025-04-02  ', ST_SetSRID(ST_MakePoint(-41.50862, -15.49935), 4326), 31, 4, 0.96),
     ('2025-04-02  ', ST_SetSRID(ST_MakePoint(-44.49179, -18.06242), 4326), 31, 3, 0.82),
     ('2025-04-02  ', ST_SetSRID(ST_MakePoint(-44.96906, -12.78323), 4326), 29, 3, 0.69),
-    ('2025-03-20  ', ST_SetSRID(ST_MakePoint(-61.90788, -11.17863), 4326), 11, 1, -999.0),
     ('2025-04-02  ', ST_SetSRID(ST_MakePoint(-44.88752, -11.2446), 4326), 29, 3, 0.61),
     ('2025-04-02  ', ST_SetSRID(ST_MakePoint(-41.32119, -15.71045), 4326), 29, 4, 0.24),
     ('2025-04-02  ', ST_SetSRID(ST_MakePoint(-41.31199, -15.70908), 4326), 29, 4, 0.25),
@@ -1030,7 +1144,6 @@ async function init() {
     ('2025-04-02  ', ST_SetSRID(ST_MakePoint(-44.04465, -12.1762), 4326), 29, 3, 0.68),
     ('2025-03-22  ', ST_SetSRID(ST_MakePoint(-63.80493, -12.28486), 4326), 11, 1, 0.02),
     ('2025-03-22  ', ST_SetSRID(ST_MakePoint(-64.30085, -12.27395), 4326), 11, 1, 0.09),
-    ('2025-03-30  ', ST_SetSRID(ST_MakePoint(-63.83368, -10.19777), 4326), 11, 1, -999.0),
     ('2025-03-21  ', ST_SetSRID(ST_MakePoint(-47.23804, -22.1319), 4326), 35, 4, 0.26),
     ('2025-03-21  ', ST_SetSRID(ST_MakePoint(-48.88204, -23.80132), 4326), 35, 3, 0.08),
     ('2025-04-02  ', ST_SetSRID(ST_MakePoint(-42.97635, -13.20265), 4326), 29, 2, 1.0),
@@ -1083,7 +1196,65 @@ async function init() {
     ('2025-04-02  ', ST_SetSRID(ST_MakePoint(-44.49852, -11.25339), 4326), 29, 3, 0.95),
     ('2025-04-02  ', ST_SetSRID(ST_MakePoint(-52.29568, -11.05795), 4326), 51, 1, 0.06),
     ('2025-04-02  ', ST_SetSRID(ST_MakePoint(-50.4972, -20.17527), 4326), 35, 4, 0.4);
-    
+
+
+    ----------------------------------------------------------------------------------------------------------------------
+    --------------criando view por estado risco de fogo---------------
+
+CREATE OR REPLACE VIEW vw_risco_estado_pernabuco AS
+SELECT r.id, r.data,r.geometria, r.risco_fogo, e.estado
+FROM Risco r JOIN Estados e ON r.estado_id = e.id_estado
+WHERE e.estado = 'Pernambuco';
+
+CREATE OR REPLACE VIEW vw_risco_estado_piaui AS
+SELECT r.id, r.data, r.geometria, r.risco_fogo, e.estado
+FROM Risco r JOIN Estados e ON r.estado_id = e.id_estado
+WHERE e.estado = 'Piauí';
+
+CREATE OR REPLACE VIEW vw_risco_estado_rio_de_janeiro AS
+SELECT r.id, r.data, r.geometria, r.risco_fogo, e.estado
+FROM Risco r JOIN Estados e ON r.estado_id = e.id_estado
+WHERE e.estado = 'Rio de Janeiro';
+
+CREATE OR REPLACE VIEW vw_risco_estado_rio_grande_do_norte AS
+SELECT r.id, r.data, r.geometria, r.risco_fogo, e.estado
+FROM Risco r JOIN Estados e ON r.estado_id = e.id_estado
+WHERE e.estado = 'Rio Grande do Norte';
+
+CREATE OR REPLACE VIEW vw_risco_estado_rio_grande_do_sul AS
+SELECT r.id, r.data, r.geometria, r.risco_fogo, e.estado
+FROM Risco r JOIN Estados e ON r.estado_id = e.id_estado
+WHERE e.estado = 'Rio Grande do Sul';
+
+CREATE OR REPLACE VIEW vw_risco_estado_rondonia AS
+SELECT r.id, r.data, r.geometria, r.risco_fogo, e.estado
+FROM Risco r JOIN Estados e ON r.estado_id = e.id_estado
+WHERE e.estado = 'Rondônia';
+
+CREATE OR REPLACE VIEW vw_risco_estado_roraima AS
+SELECT r.id, r.data, r.geometria, r.risco_fogo, e.estado
+FROM Risco r JOIN Estados e ON r.estado_id = e.id_estado
+WHERE e.estado = 'Roraima';
+
+CREATE OR REPLACE VIEW vw_risco_estado_santa_catarina AS
+SELECT r.id, r.data, r.geometria, r.risco_fogo, e.estado
+FROM Risco r JOIN Estados e ON r.estado_id = e.id_estado
+WHERE e.estado = 'Santa Catarina';
+
+CREATE OR REPLACE VIEW vw_risco_estado_sao_paulo AS
+SELECT r.id, r.data, r.geometria, r.risco_fogo, e.estado
+FROM Risco r JOIN Estados e ON r.estado_id = e.id_estado
+WHERE e.estado = 'São Paulo';
+
+CREATE OR REPLACE VIEW vw_risco_estado_sergipe AS
+SELECT r.id, r.data, r.geometria, r.risco_fogo, e.estado
+FROM Risco r JOIN Estados e ON r.estado_id = e.id_estado
+WHERE e.estado = 'Sergipe';
+
+CREATE OR REPLACE VIEW vw_risco_estado_tocantins AS
+SELECT r.id, r.data, r.geometria, r.risco_fogo, e.estado
+FROM Risco r JOIN Estados e ON r.estado_id = e.id_estado
+WHERE e.estado = 'Tocantins';
  
     
     CREATE TABLE Foco_calor(

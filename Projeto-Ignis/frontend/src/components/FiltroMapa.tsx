@@ -1,4 +1,4 @@
-
+// Versão final de FiltroMapa com props transitórias e toggles funcionais
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate, useLocation } from "react-router-dom";
@@ -10,7 +10,6 @@ interface FiltroMapaProps {
     bioma: string;
     inicio: string;
     fim: string;
-    agrupamento: 'estado' | 'bioma';
   }) => void;
 }
 
@@ -33,9 +32,6 @@ const FiltroMapa: React.FC<FiltroMapaProps> = ({ onFiltrar }) => {
   const [fim, setFim] = useState('');
   const [tipo, setTipo] = useState<string>('');
 
-  // 🧠 Calcula agrupamento implícito com base em seleção
-  const agrupamento: 'estado' | 'bioma' = estado !== '' ? 'estado' : 'bioma';
-
   useEffect(() => {
     if (location.pathname.includes("foco_calor")) setTipo("foco_calor");
     else if (location.pathname.includes("area_queimada")) setTipo("area_queimada");
@@ -47,14 +43,7 @@ const FiltroMapa: React.FC<FiltroMapaProps> = ({ onFiltrar }) => {
     const rota = tipo ? `/${tipo}` : '/';
     navigate(rota);
     setTimeout(() => {
-      onFiltrar({
-        tipo,
-        estado: estado !== '' ? estado.toString() : '',
-        bioma: bioma !== '' ? bioma.toString() : '',
-        inicio,
-        fim,
-        agrupamento
-      });
+      onFiltrar({ tipo, estado: estado !== '' ? estado.toString() : '', bioma: bioma !== '' ? bioma.toString() : '', inicio, fim });
     }, 100);
   };
 
@@ -130,25 +119,15 @@ const FiltroMapa: React.FC<FiltroMapaProps> = ({ onFiltrar }) => {
         </Datas>
 
         <AplicarButton onClick={aplicarFiltro}>Aplicar</AplicarButton>
+        
         <LimparButton onClick={limparFiltro}>Limpar</LimparButton>
+
       </Filtros>
     </FiltroContainer>
   );
 };
 
 export default FiltroMapa;
-
-// Estilos mantidos com correção do styled prop
-const SliderThumb = styled.div<{ $ativo: boolean }>`
-  position: absolute;
-  width: 40px;
-  height: 20px;
-  background-color: #333;
-  border-radius: 10px;
-  transition: transform 0.3s ease-in-out;
-  transform: ${({ $ativo }) => ($ativo ? 'translateX(60px)' : 'translateX(0)')};
-`;
-
 
 const FiltroContainer = styled.div`
   font-weight: bold;
@@ -188,6 +167,16 @@ const Slider = styled.div<{ $ativo: boolean; $cor: string }>`
   display: flex;
   align-items: center;
   padding: 2px;
+`;
+
+const SliderThumb = styled.div<{ $ativo: boolean }>`
+  position: absolute;
+  width: 40px;
+  height: 20px;
+  background-color: #333;
+  border-radius: 10px;
+  transition: transform 0.3s ease-in-out;
+  transform: ${({ $ativo }) => ($ativo ? 'translateX(60px)' : 'translateX(0)')};
 `;
 
 const Select = styled.select`

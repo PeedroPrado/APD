@@ -1,6 +1,10 @@
-// Grafico.tsx seguro
 import React, { useEffect, useState } from 'react';
 import { Chart } from 'react-google-charts';
+
+interface DadoGrafico {
+  categoria: string;
+  total: number;
+}
 
 interface Filtros {
   tipo: string;
@@ -10,130 +14,93 @@ interface Filtros {
   fim: string;
 }
 
-interface Dado {
-  data?: string;
-  estado: string;
-  risco_fogo?: number;
-  frp?: number;
-  area_queimada?: number;
-}
-
 interface Props {
-  filtros?: Filtros;
+  filtros: Filtros;
 }
 
 const Grafico: React.FC<Props> = ({ filtros }) => {
-  const [dados, setDados] = useState<Dado[]>([]);
-  const [carregando, setCarregando] = useState(true);
+  const [dados, setDados] = useState<DadoGrafico[]>([]);
+
+  const montarQueryParams = () => {
+    const params = new URLSearchParams();
+    if (filtros.estado) params.append('estado', filtros.estado);
+    if (filtros.bioma) params.append('bioma', filtros.bioma);
+    if (filtros.inicio) params.append('inicio', filtros.inicio);
+    if (filtros.fim) params.append('fim', filtros.fim);
+    return params.toString();
+  };
 
   useEffect(() => {
-    if (!filtros || !['risco', 'foco_calor', 'area_queimada'].includes(filtros.tipo)) {
-      console.warn('Tipo inválido ou filtros indefinidos.');
-      setCarregando(false);
-      return;
-    }
-
-    const fetchDados = async () => {
-      setCarregando(true);
-
-      const query = new URLSearchParams();
-      if (filtros.estado) query.append('estado', filtros.estado);
-      if (filtros.bioma) query.append('bioma', filtros.bioma);
-      if (filtros.inicio) query.append('inicio', filtros.inicio);
-      if (filtros.fim) query.append('fim', filtros.fim);
-
-      const url =
-        filtros.tipo === 'risco' ? `/api/risco` :
-        filtros.tipo === 'foco_calor' ? `/api/foco_calor` :
-        filtros.tipo === 'area_queimada' ? `/api/area_queimada` : null;
-
+    const fetchData = async () => {
+      const query = montarQueryParams();
+      const url = `http://localhost:3000/api/grafico/area_queimada?${query}`;
       try {
-        const res = await fetch(`http://localhost:3000${url}?${query.toString()}`);
-
-        if (!res.ok) {
-          throw new Error(`Erro HTTP: ${res.status}`);
-        }
-
-        const text = await res.text();
-
-        if (!text.trim()) {
-          console.warn('Resposta vazia do backend');
-          setDados([]);
-          return;
-        }
-
-        const json = JSON.parse(text);
-        if (Array.isArray(json)) {
-          setDados(json);
+        const res = await fetch(url);
+        const rawData = await res.json();
+        console.log("Dados do gráfico:", rawData);
+        if (Array.isArray(rawData)) {
+          setDados(rawData);
         } else {
-          console.warn('Resposta JSON inesperada:', json);
           setDados([]);
         }
       } catch (error) {
         console.error('Erro ao buscar dados do gráfico:', error);
         setDados([]);
-      } finally {
-        setCarregando(false);
       }
     };
 
-    fetchDados();
+    fetchData();
   }, [filtros]);
 
-  if (carregando) return <p style={{ padding: '2rem' }}>Carregando gráfico...</p>;
-  if (!dados.length) return <p style={{ padding: '2rem' }}>Nenhum dado para exibir.</p>;
-
-  const tipo =
-    dados[0].area_queimada !== undefined
-      ? 'area_queimada'
-      : dados[0].frp !== undefined
-      ? 'frp'
-      : dados[0].risco_fogo !== undefined
-      ? 'risco_fogo'
-      : 'valor';
-
   const chartData = [
-  ['Estado', 'FRP'],
-  ...dados.map((d) => [d.estado, Number(d.frp)])
-];
+    ['Categoria', 'Área Queimada', { role: 'style' }],
+    ...dados.map((d) => [d.categoria, Number(d.total), getCorBioma(d.categoria)]),
+  ];
 
-  const chartType = tipo === 'area_queimada' ? 'BarChart' : tipo === 'frp' ? 'ColumnChart' : 'LineChart';
-
-  const options = {
-    title: 'Dados filtrados',
-    chartArea: { width: '80%' },
-    hAxis: { title: 'Data' },
-    vAxis: { title: tipo.toUpperCase(), minValue: 0 },
-    legend: { position: 'none' },
-  };
+  function getCorBioma(bioma: string): string {
+    switch (bioma.toLowerCase()) {
+      case 'amazonia': return '#00b050';
+      case 'cerrado': return '#ff0000';
+      case 'pantanal': return '#4f81bd';
+      case 'mata atlantica': return '#7030a0';
+      case 'caatinga': return '#ffc000';
+      case 'pampa': return '#ffff00';
+      default: return '#999999';
+    }
+  }
 
   return (
     <div
       style={{
+        padding: '20px',
+        backgroundColor: '#2b2b2b',
+        minHeight: '60vh',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: '2rem',
-        width: '100%',
-        height: '100%',
-        marginLeft: '350px'
+        border: '4px solid #111',
       }}
     >
-      <div style={{ width: '60%', minWidth: '500px' }}>
+      {chartData.length <= 1 ? (
+        <p style={{ color: 'white' }}>Nenhum dado disponível.</p>
+      ) : (
         <Chart
-  chartType="BarChart"
-  width="100%"
-  height="500px"
-  data={chartData}
-  options={{
-    title: 'FRP por Estado',
-    chartArea: { width: '70%' },
-    hAxis: { title: 'FRP', minValue: 0 },
-    vAxis: { title: 'Estado' },
-    legend: { position: 'none' },
-  }}
-/>
-      </div>
+          chartType="BarChart"
+          data={chartData}
+          options={{
+            title: 'Área Queimada por Bioma',
+            legend: { position: 'none' },
+            bars: 'horizontal',
+            height: 400,
+            backgroundColor: '#2b2b2b',
+            titleTextStyle: { color: '#fff' },
+            hAxis: { minValue: 0, textStyle: { color: '#fff' } },
+            vAxis: { textStyle: { color: '#fff' } },
+          }}
+          width="100%"
+          height="400px"
+        />
+      )}
     </div>
   );
 };

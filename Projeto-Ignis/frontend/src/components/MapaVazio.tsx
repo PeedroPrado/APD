@@ -31,11 +31,10 @@ const MapaVazio: React.FC = () => {
 export default MapaVazio;
 
 const MapaContainer = styled.div`
-  position: fixed; /* mais estável */
+  position: absolute;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: -1; /* empurra para trás */
-  pointer-events: none; /* ignora cliques */
+  z-index: 0;
 `;

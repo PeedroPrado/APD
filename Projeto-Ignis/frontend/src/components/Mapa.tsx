@@ -1,10 +1,10 @@
-// Mapa.tsx
-import React, { useEffect, useState, useCallback } from 'react';
-
+import React, { useEffect, useState, useTransition } from 'react';
+import styled from 'styled-components';
 
 const MapComponent = React.lazy(() => import('./MapComponent'));
+const FiltroMapa = React.lazy(() => import('./FiltroMapa'));
 
-interface BaseDado {
+interface Ocorrencia {
   latitude: number;
   longitude: number;
   estado: string;
@@ -14,7 +14,7 @@ interface BaseDado {
   dia_sem_chuva?: string;
   precipitacao?: number;
   frp?: number;
-  tipo: 'risco' | 'foco' | 'area_queimada';
+  tipo: string;
 }
 
 interface Filtros {
@@ -23,18 +23,18 @@ interface Filtros {
   bioma: string;
   inicio: string;
   fim: string;
-  agrupamento: 'estado' | 'bioma';
 }
 
 interface MapaProps {
   tipo: string;
-  filtros: Filtros;
 }
 
-const Mapa: React.FC<MapaProps> = ({ tipo, filtros }) => {
-  const [dados, setDados] = useState<BaseDado[]>([]);
+const Mapa: React.FC<MapaProps> = ({ tipo }) => {
+  const [dados, setDados] = useState<Ocorrencia[]>([]);
+  const [filtros, setFiltros] = useState<Filtros>({ tipo, estado: '', bioma: '', inicio: '', fim: '' });
+  const [isPending, startTransition] = useTransition();
 
-  const montarQueryParams = useCallback(() => {
+  const montarQueryParams = () => {
     const params = new URLSearchParams();
     if (filtros.tipo) params.append('tipo', filtros.tipo);
     if (filtros.estado) params.append('estado', filtros.estado);
@@ -42,7 +42,7 @@ const Mapa: React.FC<MapaProps> = ({ tipo, filtros }) => {
     if (filtros.inicio) params.append('inicio', filtros.inicio);
     if (filtros.fim) params.append('fim', filtros.fim);
     return params.toString();
-  }, [filtros]);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -56,21 +56,13 @@ const Mapa: React.FC<MapaProps> = ({ tipo, filtros }) => {
         const res = await fetch(`http://localhost:3000${url}`);
         const rawData = await res.json();
 
+        console.log("🔥 Dados recebidos da API:", rawData);
+
         if (Array.isArray(rawData)) {
-          setDados(
-            rawData.map((item: BaseDado) => ({
-              latitude: item.latitude,
-              longitude: item.longitude,
-              estado: item.estado,
-              bioma: item.bioma,
-              risco_fogo: item.risco_fogo,
-              data: item.data,
-              dia_sem_chuva: item.dia_sem_chuva,
-              precipitacao: item.precipitacao,
-              frp: item.frp,
-              tipo: tipo as 'risco' | 'foco' | 'area_queimada'
-            }))
-          );
+          startTransition(() => {
+            setDados(rawData.map(item => ({ ...item, tipo })));
+          });
+          
         }
       } catch (error) {
         console.error('Erro ao buscar dados:', error);
@@ -78,15 +70,30 @@ const Mapa: React.FC<MapaProps> = ({ tipo, filtros }) => {
     };
 
     fetchData();
-  }, [tipo, filtros, montarQueryParams]);
+  }, [filtros, tipo]);
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-      <React.Suspense fallback={<div style={{ padding: '2rem' }}>Carregando Mapa...</div>}>
-        <MapComponent dados={dados} agrupamento={filtros.agrupamento} />
+    <>
+      <React.Suspense fallback={<div>Carregando filtros...</div>}>
+        <FiltroMapa onFiltrar={setFiltros} />
       </React.Suspense>
-    </div>
+
+      <MapaContainer>
+        <React.Suspense fallback={<div>Carregando mapa...</div>}>
+          <MapComponent dados={dados} />
+        </React.Suspense>
+      </MapaContainer>
+    </>
   );
 };
 
 export default Mapa;
+
+const MapaContainer = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+`;
