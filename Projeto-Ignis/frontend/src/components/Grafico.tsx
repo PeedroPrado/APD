@@ -37,7 +37,15 @@ const Grafico: React.FC<Props> = ({ filtros }) => {
   useEffect(() => {
     const fetchData = async () => {
       const query = montarQueryParams();
-      const url = `http://localhost:3000/api/grafico/area_queimada?${query}`;
+      const tipo =
+        filtros.tipo === 'Focos'
+          ? 'foco_calor'
+          : filtros.tipo === 'Risco de Fogo'
+            ? 'risco'
+            : 'area_queimada';
+
+
+      const url = `http://localhost:3000/api/grafico/${tipo}?${query}`;
       try {
         const res = await fetch(url);
         const rawData = await res.json();

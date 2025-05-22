@@ -13,133 +13,88 @@ interface FiltroGraficoProps {
 }
 
 const estados = [
-  { id: '11', nome: 'Rondônia' },
-  { id: '12', nome: 'Acre' },
-  { id: '13', nome: 'Amazonas' },
-  { id: '14', nome: 'Roraima' },
-  { id: '15', nome: 'Pará' },
-  { id: '16', nome: 'Amapá' },
-  { id: '17', nome: 'Tocantins' },
-  { id: '29', nome: 'Bahia' },
-  { id: '27', nome: 'Alagoas'},
-  { id: '23', nome: 'Ceará'},
-  { id: '32', nome: 'Espirito Santo'},
-  { id: '52', nome: 'Goiás'},
-  { id: '21', nome: 'Maranhão'},
-  { id: '51', nome:'Mato Grosso'},
-  { id: '50', nome: 'Mato Grosso do Sul'},
-  { id: '31', nome:'Minas Gerais'},
-  { id: '25', nome:'Paraíba'},
-  { id: '41', nome:'Paraná'},
-  { id: '26', nome:'Pernambuco'},
-  { id: '22', nome: 'Piauí'},
-  { id: '33', nome: 'Rio de Janeiro'},
-  { id: '24', nome: 'Rio Grande do Norte'},
-  { id: '43', nome: 'Rio Grande do Sul'},
-  { id: '42', nome: 'Santa Catarina'},
-  { id: '35', nome: 'São Paulo'},
-  { id: '28', nome: 'Sergipe'},
+  { id: '11', nome: 'Rondônia' }, { id: '12', nome: 'Acre' }, { id: '13', nome: 'Amazonas' },
+  { id: '14', nome: 'Roraima' }, { id: '15', nome: 'Pará' }, { id: '16', nome: 'Amapá' },
+  { id: '17', nome: 'Tocantins' }, { id: '29', nome: 'Bahia' }, { id: '27', nome: 'Alagoas'},
+  { id: '23', nome: 'Ceará'}, { id: '32', nome: 'Espirito Santo'}, { id: '52', nome: 'Goiás'},
+  { id: '21', nome: 'Maranhão'}, { id: '51', nome:'Mato Grosso'}, { id: '50', nome: 'Mato Grosso do Sul'},
+  { id: '31', nome:'Minas Gerais'}, { id: '25', nome:'Paraíba'}, { id: '41', nome:'Paraná'},
+  { id: '26', nome:'Pernambuco'}, { id: '22', nome: 'Piauí'}, { id: '33', nome: 'Rio de Janeiro'},
+  { id: '24', nome: 'Rio Grande do Norte'}, { id: '43', nome: 'Rio Grande do Sul'},
+  { id: '42', nome: 'Santa Catarina'}, { id: '35', nome: 'São Paulo'}, { id: '28', nome: 'Sergipe'},
   { id: '53', nome: 'Distrito Federal'},
-        
 ];
 
 const biomas = [
-  { id: '1', nome: 'Amazônia' },
-  { id: '2', nome: 'Cerrado' },
-  { id: '3', nome: 'Caatinga' },
-  { id: '4', nome: 'Mata Atlântica' },
-  { id: '5', nome: 'Pampa' },
-  { id: '6', nome: 'Pantanal' },
+  { id: '1', nome: 'Amazônia' }, { id: '2', nome: 'Cerrado' }, { id: '3', nome: 'Caatinga' },
+  { id: '4', nome: 'Mata Atlântica' }, { id: '5', nome: 'Pampa' }, { id: '6', nome: 'Pantanal' },
 ];
 
 const FiltroGrafico: React.FC<FiltroGraficoProps> = ({ onAplicar }) => {
-  const [index1, setIndex1] = useState(0);
-  const [index2, setIndex2] = useState(0);
+  const [tipo, setTipo] = useState('Focos');
+  const [local, setLocal] = useState('Estados');
   const [estado, setEstado] = useState('');
   const [bioma, setBioma] = useState('');
-  const [inicio, setInicio] = useState('2025-03-20');
-  const [fim, setFim] = useState('2025-05-09');
-
-  const tipos = ['Focos', 'Área de Queimadas', 'Riscos de Fogo'];
-  const locais = ['Estados', 'Biomas'];
+  const [inicio, setInicio] = useState('');
+  const [fim, setFim] = useState('');
 
   const aplicarFiltro = () => {
-    onAplicar({
-      tipo: tipos[index1],
-      local: locais[index2],
-      inicio,
-      fim,
-      estado,
-      bioma,
-    });
+    onAplicar({ tipo, local, inicio, fim, estado, bioma });
+  };
+
+  const limparFiltros = () => {
+    setTipo('Focos');
+    setLocal('Estados');
+    setEstado('');
+    setBioma('');
+    setInicio('');
+    setFim('');
   };
 
   return (
     <FiltroContainer>
       <Filtros>
-        <ToggleLabels1>
-          {tipos.map((t, i) => (
-            <span key={i}>{t}</span>
-          ))}
-        </ToggleLabels1>
-        <SliderContainer onClick={() => setIndex1((index1 + 1) % tipos.length)}>
-          <Slider1>
-            <SliderThumb1 style={{ transform: `translateX(${index1 * 115}px)` }} />
-          </Slider1>
-        </SliderContainer>
+        <GrupoToggle>
+          <ToggleWrapper>
+            <ToggleLabel>Foco de Calor</ToggleLabel>
+            <Switch ativo={tipo === 'Focos'} onClick={() => setTipo('Focos')} />
+          </ToggleWrapper>
+          <ToggleWrapper>
+            <ToggleLabel>Área Queimada</ToggleLabel>
+            <Switch ativo={tipo === 'Área Queimada'} onClick={() => setTipo('Área Queimada')} />
+          </ToggleWrapper>
+          <ToggleWrapper>
+            <ToggleLabel>Risco de Fogo</ToggleLabel>
+            <Switch ativo={tipo === 'Risco de Fogo'} onClick={() => setTipo('Risco de Fogo')} />
+          </ToggleWrapper>
+        </GrupoToggle>
 
-        <ToggleLabels2>
-          {locais.map((l, i) => (
-            <span key={i}>{l}</span>
-          ))}
-        </ToggleLabels2>
-        <SliderContainer onClick={() => setIndex2((index2 + 1) % locais.length)}>
-          <Slider2>
-            <SliderThumb2 style={{ transform: `translateX(${index2 * 75}px)` }} />
-          </Slider2>
-        </SliderContainer>
-
-        <Label>Estados:</Label>
-        <select value={estado} onChange={(e) => setEstado(e.target.value)}>
-          <option value="">Todos</option>
+        <Label>Estados</Label>
+        <Select value={estado} onChange={(e) => setEstado(e.target.value)}>
+          <option value="">Selecione um estado</option>
           {estados.map((e) => (
             <option key={e.id} value={e.id}>{e.nome}</option>
           ))}
-        </select>
+        </Select>
 
-        <Label>Biomas:</Label>
-        <select value={bioma} onChange={(e) => setBioma(e.target.value)}>
-          <option value="">Todos</option>
+        <Label>Biomas</Label>
+        <Select value={bioma} onChange={(e) => setBioma(e.target.value)}>
+          <option value="">Selecione um bioma</option>
           {biomas.map((b) => (
             <option key={b.id} value={b.id}>{b.nome}</option>
           ))}
-        </select>
+        </Select>
 
-        <Datas>
-          <Label>Datas:</Label>
-          <InputGroup>
-            <InputContainer>
-              <Label htmlFor="inicio">Início</Label>
-              <Input
-                type="date"
-                id="inicio"
-                value={inicio}
-                onChange={(e) => setInicio(e.target.value)}
-              />
-            </InputContainer>
-            <InputContainer>
-              <Label htmlFor="fim">Fim</Label>
-              <Input
-                type="date"
-                id="fim"
-                value={fim}
-                onChange={(e) => setFim(e.target.value)}
-              />
-            </InputContainer>
-          </InputGroup>
-        </Datas>
+        <Label>Datas:</Label>
+        <LabelPequeno>Início</LabelPequeno>
+        <Input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} />
+        <LabelPequeno>Fim</LabelPequeno>
+        <Input type="date" value={fim} onChange={(e) => setFim(e.target.value)} />
 
-        <AplicarButton onClick={aplicarFiltro}>Aplicar</AplicarButton>
+        <ButtonRow>
+          <AplicarButton onClick={aplicarFiltro}>Aplicar</AplicarButton>
+          <LimparButton onClick={limparFiltros}>Limpar</LimparButton>
+        </ButtonRow>
       </Filtros>
     </FiltroContainer>
   );
@@ -147,7 +102,6 @@ const FiltroGrafico: React.FC<FiltroGraficoProps> = ({ onAplicar }) => {
 
 export default FiltroGrafico;
 
-// 🧱 estilos mantidos ou adaptados
 const FiltroContainer = styled.div`
   font-weight: bold;
   padding: 20px;
@@ -165,82 +119,45 @@ const Filtros = styled.div`
   padding: 10px 0;
 `;
 
-const ToggleLabels1 = styled.div`
+const GrupoToggle = styled.div`
   display: flex;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
+`;
 
-  span {
-    font-size: 16px;
-    color: #fff;
-    font-weight: bold;
+const ToggleWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+`;
+
+const Switch = styled.div<{ ativo: boolean }>`
+  width: 70px;
+  height: 30px;
+  background-color: ${({ ativo }) => (ativo ? '#eee' : '#666')};
+  border-radius: 15px;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.3s;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: ${({ ativo }) => (ativo ? '38px' : '3px')};
+    width: 24px;
+    height: 24px;
+    background-color: #333;
+    border-radius: 50%;
+    transition: left 0.3s;
   }
 `;
 
-const ToggleLabels2 = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 60px;
-
-  span {
-    font-size: 16px;
-    color: #fff;
-    font-weight: bold;
-  }
-`;
-
-const SliderContainer = styled.div`
-  margin: 10px 0;
-`;
-
-const Slider1 = styled.div`
-  position: relative;
-  width: 345px;
-  height: 24px;
-  background-color: #ddd;
-  border-radius: 12px;
-  border: 1px solid white;
-  display: flex;
-  align-items: center;
-  padding: 2px;
-  cursor: pointer;
-`;
-
-const Slider2 = styled.div`
-  position: relative;
-  width: 150px;
-  height: 24px;
-  background-color: #ddd;
-  border-radius: 12px;
-  border: 1px solid white;
-  display: flex;
-  align-items: center;
-  padding: 2px;
-  cursor: pointer;
-  left: 50%;
-  transform: translateX(-50%);
-`;
-
-const SliderThumb1 = styled.div`
-  position: absolute;
-  width: 100px;
-  height: 20px;
-  background-color: #333;
-  border-radius: 10px;
-  transition: transform 0.3s ease-in-out;
-`;
-
-const SliderThumb2 = styled.div`
-  position: absolute;
-  width: 75px;
-  height: 20px;
-  background-color: #333;
-  border-radius: 10px;
-  transition: transform 0.3s ease-in-out;
-`;
-
-const Datas = styled.div`
-  margin-top: 10px;
+const ToggleLabel = styled.span`
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
 `;
 
 const Label = styled.label`
@@ -250,39 +167,55 @@ const Label = styled.label`
   margin: 10px 0 5px 0;
 `;
 
-const InputGroup = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: 15px;
+const LabelPequeno = styled.label`
+  font-size: 0.9rem;
+  margin-top: 8px;
+  display: block;
 `;
 
-const InputContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  width: 48%;
+const Select = styled.select`
+  width: 100%;
+  padding: 6px;
+  margin-bottom: 10px;
+  background-color: #37474f;
+  color: white;
+  border: none;
+  border-radius: 4px;
 `;
 
 const Input = styled.input`
-  padding: 8px;
-  width: 150px;
+  width: 100%;
+  padding: 6px;
+  margin-bottom: 10px;
+  background-color: #37474f;
+  color: white;
+  border: none;
   border-radius: 4px;
-  border: 1px solid #ccc;
-  margin-top: 5px;
+`;
+
+const ButtonRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
 `;
 
 const AplicarButton = styled.button`
-  margin-top: 10px;
-  margin-left: 250px;
-  width: 100px;
-  padding: 8px;
+  flex: 1;
+  padding: 10px;
   background-color: #616161;
   color: white;
   border: none;
   border-radius: 4px;
-  cursor: pointer;
   font-weight: bold;
-
+  cursor: pointer;
   &:hover {
     background-color: #388e3c;
+  }
+`;
+
+const LimparButton = styled(AplicarButton)`
+  background-color: #9e9e9e;
+  &:hover {
+    background-color: #757575;
   }
 `;

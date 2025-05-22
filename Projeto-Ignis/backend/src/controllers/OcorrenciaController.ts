@@ -307,12 +307,12 @@ public async GraficoFocoCalor(req: Request, res: Response): Promise<void> {
     }
 
     if (inicio) {
-      queryStr += ` AND f.data >= $${values.length + 1}`;
+      queryStr += ` AND f.data_hora_t3 >= $${values.length + 1}`;
       values.push(inicio);
     }
 
     if (fim) {
-      queryStr += ` AND f.data <= $${values.length + 1}`;
+      queryStr += ` AND f.data_hora_t3 <= $${values.length + 1}`;
       values.push(fim);
     }
 
